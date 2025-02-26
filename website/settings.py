@@ -23,6 +23,10 @@ env = environ.Env()
 # Загружаем переменные из .env
 environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 
+# API Telegram
+API_ID = env.int("API_ID", default=0)
+API_HASH = env("API_HASH", default="")
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
@@ -130,6 +134,3 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# API Telegram
-API_ID = env.int("API_ID", default=0)
-API_HASH = env("API_HASH", default="")
