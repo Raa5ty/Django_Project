@@ -17,6 +17,5 @@ db.sqlite3
 # Файлы логов
 logs/
 *.log
-session_name.session
-session_name.session-journal
-session_name.session
+*.session
+*.session-journal
