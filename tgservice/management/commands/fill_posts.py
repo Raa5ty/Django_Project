@@ -7,12 +7,12 @@ from telethon.errors import FloodWaitError, UsernameInvalidError, InvalidBufferE
 import time
 
 # Загружаем API_ID и API_HASH из .env
-API_ID = settings.API_ID
-API_HASH = settings.API_HASH
+API_ID, API_HASH = settings.API_ID, settings.API_HASH
+API_ID_1, API_HASH_1 = settings.API_ID_1, settings.API_HASH_1
 SESSION_NAME = "session_name"
 
 # Инициализация Telethon клиента
-client = TelegramClient(SESSION_NAME, API_ID, API_HASH)
+client = TelegramClient(SESSION_NAME, API_ID_1, API_HASH_1)
 
 class Command(BaseCommand):
     help = "Парсит последние сообщения из каналов, сохранённых в БД"
