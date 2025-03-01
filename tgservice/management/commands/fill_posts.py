@@ -12,19 +12,20 @@ API_ID_1, API_HASH_1 = settings.API_ID_1, settings.API_HASH_1
 SESSION_NAME = "session_name"
 
 # Инициализация Telethon клиента
-client = TelegramClient(SESSION_NAME, API_ID_1, API_HASH_1)
+client = TelegramClient(SESSION_NAME, API_ID, API_HASH)
+client_ = TelegramClient(SESSION_NAME, API_ID_1, API_HASH_1)
 
 class Command(BaseCommand):
     help = "Парсит последние сообщения из каналов, сохранённых в БД"
 
-    def fetch_and_save_messages(self, client, channel: Channel, limit: int = 30):
+    def fetch_and_save_messages(self, client_, channel: Channel, limit: int = 30):
         """Парсит сообщения и сохраняет их в БД."""
         retries = 5  # Количество повторных попыток
         wait_time = 10  # Задержка перед повтором
         
         for attempt in range(retries):
             try:
-                messages = client.get_messages(channel.name, limit=limit)
+                messages = client_.get_messages(channel.name, limit=limit)
                 new_or_updated = 0
 
                 for msg in messages:
@@ -67,7 +68,7 @@ class Command(BaseCommand):
         # channels = Channel.objects.all()  # Берём все каналы из БД
         channels = Channel.objects.annotate(
                 msg_count=Count("messages", distinct=True) # DISTINCT нужен для корректного подсчёта сообщений в Message
-            ).filter(Q(msg_count__lt=30) | Q(msg_count=0)) # Оставить те каналы, у кого сообщений либо = 0 или <30
+            ).filter(Q(msg_count__lt=25) | Q(msg_count=0)) # Оставить те каналы, у кого сообщений либо = 0 или <25
         
         if not channels.exists():
             self.stdout.write(self.style.WARNING("⚠ В базе нет каналов для парсинга"))
