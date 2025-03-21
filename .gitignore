@@ -19,3 +19,6 @@ logs/
 *.log
 *.session
 *.session-journal
+
+# Папки с медиа файлами
+media/
