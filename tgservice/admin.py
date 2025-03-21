@@ -8,6 +8,10 @@ class CategoryAdmin(admin.ModelAdmin):
     search_fields = ["name"]
     list_filter = ["name"]
 
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        return queryset.order_by("name")  # Сортировка по алфавиту
+
 @admin.register(Channel)
 class ChannelAdmin(admin.ModelAdmin):
     search_fields = ["name", "title"]  # Поиск по имени и заголовку
