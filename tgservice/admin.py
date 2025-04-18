@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.db.models import Count
-from .models import Category, Channel, Message
+from tgservice.models import Category, Channel, Message, WorkSheet
+from rangefilter.filters import NumericRangeFilter
 
 # Register your models here.
 @admin.register(Category)
@@ -32,3 +33,27 @@ class MessageAdmin(admin.ModelAdmin):
     search_fields = ["text"]  # Поиск по тексту сообщений
     list_filter = [("channel", admin.RelatedOnlyFieldListFilter)]  # Обычный фильтр по каналам, без кнопки счётчика
     date_hierarchy = "date"  # Добавляет фильтр по дате
+
+# Регистрируем модель WorkSheet в админке
+@admin.register(WorkSheet)
+class WorkSheetAdmin(admin.ModelAdmin):
+    list_display = [
+        "channel_name",
+        "category",
+        "subscribers",
+        "text_length",
+        "first_post_date",
+        "last_post_date",
+        "total_posts",
+        "active_months",
+        "profile_channel",
+        "profile_intokens",
+        "profile_outtokens",
+    ]
+    list_filter = [
+        "category",
+        ("subscribers", NumericRangeFilter),
+        ("text_length", NumericRangeFilter),
+        ("total_posts", NumericRangeFilter),
+    ]
+    search_fields = ["channel_name"]

@@ -30,6 +30,11 @@ API_HASH = env("API_HASH", default="")
 API_ID_1 = env.int("API_ID_1", default=0)
 API_HASH_1 = env("API_HASH_1", default="")
 
+# API TG-bot
+TG_TOKEN = env("TG_TOKEN", default="")
+# API OpenAI
+OPENAI_API_KEY = env("OPENAI_API_KEY", default="")
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
@@ -45,7 +50,8 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    'tgservice', # Приложение для ТГ-бота
+    'tgservice', # App AI-assistant for Telegram
+    "rangefilter", # Filtering in admin panel
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
