@@ -4,14 +4,14 @@ from .models import Project
 class ProjectForm(forms.ModelForm):
     class Meta:
         model = Project
-        fields = ['name', 'description', 'profile', 'keywords', 'creative', 'num_channels']  # Не включаем created_at
+        fields = ['name', 'description', 'project_profile', 'keywords', 'creatives', 'count_requested']
         labels = {
             'name': 'Название проекта',
             'description': 'Описание проекта',
-            'profile': 'Профиль ЦА',
+            'project_profile': 'Профиль ЦА',
             'keywords': 'Ключевые слова',
-            'creative': 'Пример креатива',
-            'num_channels': 'Количество каналов',
+            'creatives': 'Примеры креативов',
+            'count_requested': 'Количество каналов',
         }
 
 # Форма для поиска релевантныхх каналов под рекламную кампанию

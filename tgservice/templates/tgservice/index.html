@@ -1,28 +1,23 @@
 {% extends 'base.html' %}
 
 {% block title %}
-    Simple Sidebar - Start Bootstrap Template
+    TG-Service
 {% endblock %}
 
 {% block content %}
-<!-- Page content-->
-<div class="container-fluid">
-    <h1 class="mt-4">Telegram Service</h1>
-    <p>
-        The starting state of the menu will appear collapsed on smaller screens, and will appear non-collapsed on larger screens. When toggled using the button below, the menu will change.
-    </p>
-    <p>
-        Make sure to keep all page content within the
-        <code>#page-content-wrapper</code>
-        . The top navbar is optional, and just for demonstration. Just create an element with the
-        <code>#sidebarToggle</code>
-        ID which will toggle the menu when clicked.
-    </p>
-    <!-- {{ form.as_ul }} -->
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}  <!-- Отобразятся кастомные лэйблы -->
-        <button type="submit">Создать проект</button>
-    </form>
+<!-- Главная страница -->
+<div class="page" id="index-page">
+    
+    <div class="main-description">
+        <h2>Поиск релевантных каналов под вашу рекламную кампанию с TG-Service</h2>
+        <br>
+        <br>
+        <br>
+        <p>Приложение нацелено на то, чтобы сделать поиск релевантных каналов для проведения рекламных компаний проще и быстрее!</p>
+    </div>
+    
+    <button class="btn btn-block" id="start-test-button" data-url="{% url 'tgservice:search' %}">
+        Перейти к подбору каналов
+    </button>
 </div>
-{% endblock %}
+{% endblock %}           
