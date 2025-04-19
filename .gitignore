@@ -25,3 +25,6 @@ media/
 
 # Игнорировать всё, что начинается с #
 \#*
+
+# Добавить в .gitignore папку и все содержимое tgservice\results_fill_db
+tgservice/results_fill_db/
