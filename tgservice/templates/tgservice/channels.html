@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Поиск по Базе данных
+{% endblock %}
+
+{% block content %}
+<!-- Страница диалогов (заглушка) -->
+<div class="page" id="channels-page">
+    <h1 class="page-title">{{ title }}</h1>
+
+    <form method="get" class="filter-form">
+        <div class="form-group">
+            <label for="category">Категории:</label>
+            <select name="category" multiple class="form-control" size="5">
+                {% for cat in all_categories %}
+                    <option value="{{ cat.name }}" {% if cat.name in selected_categories %}selected{% endif %}>
+                        {{ cat.name }}
+                    </option>
+                {% endfor %}
+            </select>
+            <small>Ctrl + Клик для выбора нескольких</small>
+        </div>
+
+        <div class="form-group">
+            <label for="min_subs">Мин. подписчиков:</label>
+            <input type="number" name="min_subs" class="form-control" value="{{ min_subs }}">
+        </div>
+
+        <div class="form-group">
+            <label for="max_subs">Макс. подписчиков:</label>
+            <input type="number" name="max_subs" class="form-control" value="{{ max_subs }}">
+        </div>
+
+        <div class="form-group">
+            <button type="submit" class="btn">Применить фильтры</button>
+            <a href="{% url 'tgservice:channels' %}" class="btn" style="background: #666;">Сбросить</a>
+        </div>
+    </form>
+
+    {% if channels %}
+        <div class="table-wrapper">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Название канала</th>
+                        <th>Категория</th>
+                        <th>Подписчики</th>
+                        <th>Описание</th>
+                        <th>Дата последнего поста</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ch in channels %}
+                        <tr>
+                            <td>{{ ch.channel_name }}</td>
+                            <td>{{ ch.category }}</td>
+                            <td>{{ ch.subscribers }}</td>
+                            <td>{{ ch.description|truncatechars:120 }}</td>
+                            <td>{{ ch.last_post_date }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Пагинация -->
+        <div class="pagination">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}">← Назад</a>
+            {% endif %}
+
+            <span>Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}</span>
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}">Вперёд →</a>
+            {% endif %}
+        </div>
+    {% else %}
+        <p>Нет данных для отображения.</p>
+    {% endif %}
+</div>
+{% endblock %}

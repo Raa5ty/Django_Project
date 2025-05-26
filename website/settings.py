@@ -17,6 +17,9 @@ import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# PATH to IndexDB
+FAISS_INDEX_PATH = os.path.join(BASE_DIR, 'tgservice', 'Index_DB_12-05-2025')
+
 # Создаём объект окружения
 env = environ.Env()
 

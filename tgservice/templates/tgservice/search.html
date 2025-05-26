@@ -5,75 +5,88 @@
 {% endblock %}
 
 {% block content %}
-<!-- Страница анкетирования -->
+<!-- Страница подбора каналов -->
 <div class="page" id="search-page">
-    <h1 class="page-title">Поиск каналов под рекламную кампанию</h1>
-    
+    <h1 class="page-title">
+        <a href="{% url 'tgservice:search' %}" style="color: inherit; text-decoration: none;">Новый рекламный проект</a>
+    </h1>
+    <!-- Форма для проекта -->
     <div class="form-container">
-        <form id="search-form">
-            <div class="form-group">
-                <label for="tg-name" class="form-label">Имя в Телеграм</label>
-                <input type="text" id="tg-name" class="form-control" placeholder="@username" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="name" class="form-label">Ваше имя</label>
-                <input type="text" id="name" class="form-control" placeholder="Как вас зовут?" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="language" class="form-label">Язык</label>
-                <div class="select-group">
-                    <select id="language" class="form-control" required>
-                        <option value="" selected disabled>Выберите язык</option>
-                        <option value="english">Английский</option>
-                        <option value="spanish">Испанский</option>
-                        <option value="french">Французский</option>
-                        <option value="german">Немецкий</option>
-                    </select>
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-columns">
+                <!-- строка 1 -->
+                <div class="form-group">
+                    <label class="form-label" for="id_name">Название проекта</label>
+                    {{ form.name }}
                 </div>
-            </div>
-            
-            <div class="form-group">
-                <label for="level" class="form-label">Уровень</label>
-                <div class="select-group">
-                    <select id="level" class="form-control" required>
-                        <option value="" selected disabled>Выберите уровень</option>
-                        <option value="beginner">Начинающий</option>
-                        <option value="intermediate">Средний</option>
-                        <option value="advanced">Продвинутый</option>
-                        <option value="expert">Эксперт</option>
-                    </select>
+                <div class="form-group">
+                    <label class="form-label" for="id_count_requested">Количество каналов</label>
+                    {{ form.count_requested }}
                 </div>
-            </div>
-            
-            <div class="form-group">
-                <label class="form-label">Пол</label>
-                <div class="radio-group">
-                    <label class="radio-label">
-                        <input type="radio" name="gender" value="male" class="radio-input" checked>
-                        Мужской
-                    </label>
-                    <label class="radio-label">
-                        <input type="radio" name="gender" value="female" class="radio-input">
-                        Женский
-                    </label>
-                    <label class="radio-label">
-                        <input type="radio" name="gender" value="other" class="radio-input">
-                        Не указывать
-                    </label>
+                <!-- строка 2 -->
+                <div class="form-group">
+                    <label class="form-label" for="id_description">Описание проекта</label>
+                    {{ form.description }}
                 </div>
+                <div class="form-group">
+                    <label class="form-label" for="id_target_audience">Целевая аудитория</label>
+                    {{ form.target_audience }}
+                </div>
+                <!-- строка 3 -->
+                <div class="form-group">
+                    <label class="form-label" for="id_keywords">Ключевые слова</label>
+                    {{ form.keywords }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="id_creatives">Примеры креативов</label> 
+                    {{ form.creatives }}
+                </div>               
             </div>
-            
-            <div class="form-group">
-                <label for="age" class="form-label">Возраст</label>
-                <input type="number" id="age" class="form-control" min="6" max="120" required>
-            </div>
-            
-            <button class="btn btn-block" id="start-test-button" data-url="{% url 'tgservice:projects' %}">
-                Начать поиск
-            </button>
+
+                <div class="form-group">
+                    <button type="submit" class="btn">Начать подбор</button>
+                </div>
         </form>
     </div>
+
+    <!-- Таблица результатов -->
+    {% if project %}
+    <div class="projects-description">
+        <h2>Проект: {{ project.name }}</h2>
+        <p><strong>Описание:</strong> {{ project.description }}</p>
+        <p><strong>ЦА:</strong> {{ project.target_audience }}</p>
+        <p><strong>Ключевые слова:</strong> {{ project.keywords }}</p>
+    </div>
+
+    <div class="projects-description">
+        <h3>Найденные каналы</h3>
+        <table class="form-control">
+            <thead>
+                <tr>
+                    <th>Канал</th>
+                    <th>Категория</th>
+                    <th>Подписчики</th>
+                    <th>Описание</th>
+                    <th>Ключевые слова</th>
+                    <th>Оценка</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for channel in channels %}
+                <tr>
+                    <td>{{ channel.channel_name }}</td>
+                    <td>{{ channel.category }}</td>
+                    <td>{{ channel.subscribers }}</td>
+                    <td>{{ channel.description|truncatewords:20 }}</td>
+                    <td>{{ channel.keywords_channel }}</td>
+                    <td>{{ channel.score }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
 </div>
 {% endblock %}           

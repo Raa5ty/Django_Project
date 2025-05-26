@@ -1,128 +1,109 @@
-from tgservice.tgbot.utils import OpenAIRequests, get_relevant_channels, process_generate_creatives, load_faiss_index
+from tgservice.tgbot.utils import TargetPipeline
+from asgiref.sync import sync_to_async
+from tgservice.tgbot.agents import survey_agent, result_survey_agent
 from aiogram import Router, F, types
+from aiogram.types import Message, FSInputFile
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from django.conf import settings
 import logging
-import pandas as pd
+import os
 
 # Настроим логирование
 logging.basicConfig(level=logging.INFO)
 
 router = Router()
 
-# Загрузка баз данных
-index = load_faiss_index('Index_FAIS_DB')
-
-api_key = settings.OPENAI_API_KEY
-
-profile = OpenAIRequests(api_key)
+# Создаём экземпляр пайплайна
+pipeline = TargetPipeline(api_key=settings.OPENAI_API_KEY, index_path=settings.FAISS_INDEX_PATH)
 
 # Состояния FSM
 class Form(StatesGroup):
-    describing_campaign = State() # Состояние для описания рекламной кампании
-    uploading_creatives = State() # Состояние для загрузки креативов
-    inputting_keywords = State() # Состояние для ввода ключевых слов
-    profile_creative = State() # Состояние для получения профиля ЦА
-    selecting_top_k  = State() # Состояние для выбора количества релевантных каналов
+    in_survey = State() # Состояние для агента-анкетирования
+
+# Финальная функция сбора данных и возврата exel файла с релевантными каналами
+async def run_final_pipeline(message: Message, state: FSMContext):
+    data = await state.get_data()
+    dialog: str = data.get("dialog", "")
+
+    try:
+        # Запрос к RESULT агенту
+        project = await result_survey_agent(dialog)
+
+        if not project:
+            await message.answer("Не удалось проанализировать диалог. Попробуй ещё раз позже.")
+            await state.clear()
+            return
+
+        description_project = (
+            f"Описание рекламного проекта: {project.description}\n"
+            f"Описание целевой аудитории: {project.target_audience}"
+            )
+
+        # Профилирование
+        profile_project = await pipeline.get_profile_creative(description_project)
+
+        # Обновляем поле проекта в БД
+        project.project_profile = profile_project
+        await sync_to_async(project.save)()
+
+        # Поиск каналов
+        keywords_project = project.keywords
+        top_k = project.count_requested
+        relevant_objects = await pipeline.get_relevant_channels(profile_project, keywords_project, project, top_k)
+
+        # Генерация новых креативов
+        update_relevant_objects, channels_list = await pipeline.process_generate_creatives(relevant_objects, project)
+
+        # Сохраняем в Excel
+        project_id = project.id
+        excel_path = await sync_to_async(pipeline.relevant_channels_to_excel)(update_relevant_objects, project_id)
+
+        # Отправка результата
+        await message.answer("Вот релевантные каналы:\n" + "\n".join(channels_list))
+        await message.answer_document(FSInputFile(excel_path))
+        await sync_to_async(os.remove)(excel_path)
+
+    except Exception as e:
+        print(f"[run_final_pipeline ERROR] {e}")
+        await message.answer("Произошла ошибка при обработке. Попробуй позже.")
+
+    finally:
+        await state.clear()
+
 
 # 1. Логика команды /help
 @router.message(Command("help"))
-async def help_command(message: types.Message):
+async def help_command(message: Message):
     # Отправляем сообщение с помощью метода send_message
-    await message.answer("Я могу помочь вам подобрать релевантные каналы под рекламную кампанию и сгенерировать креативы учитывая профиль и интересы ЦА канала.")
+    await message.answer(
+        "Я умею подбирать релевантные каналы под рекламную кампанию" 
+        "и генерировать креативы учитывая профиль и интересы ЦА канала. Просто нажми /start"
+        )
     
 # 2. Логика команды /start
 @router.message(Command("start"))
-async def start_command(message: types.Message, state: FSMContext):
-    await message.answer("""Для начала опишите кратко рекламную кампанию, с каким каналом или ресурсом она связана и на кого нацелена.""")
-    await state.set_state(Form.describing_campaign)
+async def start_command(message: Message, state: FSMContext):
+    await state.set_state(Form.in_survey)
+    await state.update_data(dialog="")  # очищаем диалог
+    await message.answer("Давай подберём ТГ-каналы и сгенерируем новые креативы под твой рекламный проект. Готов?")
 
-# Обработка ответа на описание кампании
-@router.message(Form.describing_campaign)
-async def describe_campaign(message: types.Message, state: FSMContext):
-    campaign_description = message.text
-    await state.update_data(campaign_description=campaign_description)
+@router.message(Form.in_survey)
+async def handle_dialog(message: Message, state: FSMContext):
+    state_data = await state.get_data()
+    current_dialog = state_data.get("dialog", "")
+    user_input = message.text
 
-    # Запрашиваем креативы
-    await message.answer("Отправьте примеры рекламных креативов, которые вы хотели бы использовать в этой кампании.\nЕсли креативов несколько, возьмите каждый в кавычки и разделите точкой с запятой")
-    await state.set_state(Form.uploading_creatives)
+    # Добавляем пользовательское сообщение
+    current_dialog += f"👤 Специалист: {user_input}\n"
 
-# Обработка ответа на креативы
-@router.message(Form.uploading_creatives)
-async def upload_creatives(message: types.Message, state: FSMContext):
-    creatives = message.text
-    await state.update_data(creatives=creatives)
-    user_data = await state.get_data()
+    agent_response, new_state = await survey_agent(user_input, current_dialog)
+    current_dialog += f"🤖 Агент: {agent_response}\n"
 
-    # Объединяем данные (описание кампании и креативы)
-    combined_data = user_data['campaign_description'] + " " + creatives
+    await message.answer(agent_response)
+    await state.update_data(dialog=current_dialog)
 
-    try:
-        # Отправляем объединенные данные в функцию
-        response = await profile.get_profile_creative(combined_data)
-        
-        # Проверяем корректность ответа
-        if not response or not isinstance(response, str):
-            await message.answer("Произошла ошибка при создании профиля креатива. Попробуйте снова.")
-            return
-
-        # Сохраняем ответ
-        await state.update_data(profile_creative=response)
-
-    except Exception as e:
-        # Логируем ошибку
-        print(f"Ошибка при обработке профиля креатива: {e}")
-        
-        # Сообщение пользователю
-        await message.answer("Произошла ошибка при обработке запроса. Попробуйте позже.")
-
-    # Переход к следующему этапу
-    await message.answer("Напишите от 10 до 20 ключевых слов или фраз через запятую, описывающих вашу рекламную кампанию.")
-    await state.set_state(Form.inputting_keywords)
-
-# Обработка ввода ключевых слов
-@router.message(Form.inputting_keywords)
-async def input_keywords(message: types.Message, state: FSMContext):
-    keywords_profile = message.text
-    await state.update_data(keywords_profile=keywords_profile) 
-
-    # Запрашиваем какое количество релевантных каналов необходимо получить
-    await message.answer("Какое количество релевантных каналов вы хотите получить? Отправте числом.\nУчтите, что каналы по релевантности в csv файле сформируются вниз по убывающей.")
-    await state.set_state(Form.selecting_top_k)
-
-# Обработка ввода количества каналов
-@router.message(Form.selecting_top_k)
-async def select_top_k(message: types.Message, state: FSMContext):
-    try:
-        # Получаем значение от пользователя
-        top_k = int(message.text)
-
-        # Извлекаем сохранённые данные
-        user_data = await state.get_data()
-        description_campaign = user_data['campaign_description']
-        created_profile = user_data['profile_creative'] 
-        keywords_profile = user_data['keywords_profile']
-
-        # Отправляем объединенные данные в функцию get_relevant_channels
-        relevant_channels_df = get_relevant_channels(index, description_campaign, created_profile, keywords_profile, top_k=top_k)
-
-        await message.answer(f"Релевантные каналы подобраны. Генерируются новые креативы...")
-
-        # Извлечение креативов из состояния
-        creatives = user_data['creatives']
-
-        # Следующим запросов из созданной дф получаем к каждому найденому каналу сгенерированный креатив
-        relevant_channels_with_created_creative_df, channels_list = await process_generate_creatives(relevant_channels_df, creatives)
-
-        #Сохраняем результаты в CSV файл
-        relevant_channels_with_created_creative_df.to_excel('result_file.xlsx', index=False, engine='openpyxl')
-
-        # Отправляем файл пользователю
-        await message.answer("Найденные каналы:\n" + "\n".join((channels_list)))
-        await message.answer_document(types.FSInputFile('result_file.xlsx'))
-
-    except ValueError:
-        # Обработка некорректного ввода
-        await message.answer("Пожалуйста, введите число.")
+    if new_state == "in_analysis":
+        await message.answer("Пожалуйста, подождите. Идёт анализ...")
+        await run_final_pipeline(message, state)

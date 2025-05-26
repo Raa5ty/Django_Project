@@ -9,13 +9,25 @@
 <div class="page" id="projects-page">
     <h1 class="page-title">Последние проекты</h1>
     
-    <div class="projects-description">
-        <h2>Описание теста</h2>
-        <p>Этот тест поможет определить ваш текущий уровень знаний. Тест состоит из 20 вопросов различной сложности, которые охватывают основные темы.</p>
-        <p>Время прохождения теста не ограничено, но постарайтесь отвечать на вопросы последовательно и без посторонней помощи.</p>
-        <p>После завершения теста вы получите подробный анализ ваших ответов и рекомендации по дальнейшему обучению.</p>
-    </div>
+    {% if projects %}
+        <div class="project-list">
+            {% for project in projects %}
+                <div class="project-card">
+                    <h2 class="project-title">{{ project.name }}</h2>
+                    <p class="project-date">Создан: {{ project.created_at|date:"d.m.Y H:i" }}</p>
+                    <p class="project-desc">{{ project.description|default:"(нет описания)"|truncatechars:180 }}</p>
+                    <a href="{% url 'tgservice:search' %}?project_id={{ project.id }}" class="btn small-btn">Открыть</a>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="text-muted">Проекты пока не созданы.</p>
+    {% endif %}
     
-    <button class="btn btn-block" id="start-test-button">Перейти к тесту</button>
+    <div style="margin-top: 40px;">
+        <a href="{% url 'tgservice:search' %}" class="btn small-btn">
+            <h2>Создать новый проект</h2>
+        </a>
+    </div>
 </div>
 {% endblock %}           

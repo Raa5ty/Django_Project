@@ -6,10 +6,11 @@
 
 {% block content %}
 <!-- Главная страница -->
-<div class="page" id="index-page">
+<div class="page" id="main-page">
+    <p>{{ message }}</p>
     
     <div class="main-description">
-        <h2>Поиск релевантных каналов под вашу рекламную кампанию с TG-Service</h2>
+        <h1>Поиск релевантных каналов под вашу рекламную кампанию с TG-Service</h1>
         <br>
         <br>
         <br>
@@ -17,7 +18,7 @@
     </div>
     
     <button class="btn btn-block" id="start-test-button" data-url="{% url 'tgservice:search' %}">
-        Перейти к подбору каналов
+        <h2>Создать новый проект</h2>
     </button>
 </div>
 {% endblock %}           
