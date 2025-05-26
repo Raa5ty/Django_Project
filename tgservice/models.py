@@ -57,8 +57,9 @@ class WorkSheet(models.Model):
 class Project(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     name = models.CharField(max_length=255)  # Название Рекламной кампании
-    description = models.TextField(null=True)         # Описание
-    keywords = models.TextField(null=True)            # Ключевые слова (можно в виде JSON-строки или просто CSV)
+    description = models.TextField(null=True) # Описание Рекламной кампании
+    target_audience = models.TextField(null=True) # Описание ЦА
+    keywords = models.TextField(null=True)  # Ключевые слова 
     creatives = models.TextField(null=True)  # Примеры креативов
     count_requested = models.PositiveIntegerField(null=True)   # Сколько каналов запрашивали
     project_profile = models.TextField(null=True)  # Сгенерированный профиль
@@ -67,21 +68,23 @@ class Project(models.Model):
         return f"{self.name} (создан: {self.created_at.strftime('%Y-%m-%d %H:%M')})"
 
 class RelevantChannel(models.Model):
-    project_name = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='results')
-    channel_name = models.CharField(max_length=255, unique=True)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='relevant_channels')
+    channel_name = models.CharField(max_length=255)
     category = models.CharField(max_length=255)
     subscribers = models.IntegerField(null=True)
     title = models.CharField(max_length=255, null=True)
     description = models.TextField(blank=True, null=True)
-    last_post_date = models.DateTimeField(null=True)
+    last_post_date = models.DateField(null=True)
     profile_channel = models.TextField(null=True)
     keywords_channel = models.TextField(null=True)
     score = models.FloatField(null=True)
-    project_profile = models.TextField(null=True)
     new_creatives = models.TextField(null=True)
 
+    class Meta:
+        unique_together = ('project', 'channel_name')
+
     def __str__(self):
-        return f"[{self.project_name}] {self.channel_name}"
+        return f"[{self.project.name}] {self.channel_name}"
 
 #     # Основные типы полей
 #     # дата

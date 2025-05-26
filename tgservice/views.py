@@ -1,20 +1,120 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
+from django.views.generic import TemplateView, ListView
 from .forms import ProjectForm
+from .models import Project, RelevantChannel, WorkSheet, Category
+from tgservice.tgbot.utils import TargetPipeline
+from asgiref.sync import async_to_sync
+from django.conf import settings
+
+# Создаём один экземпляр для всего модуля
+pipeline = TargetPipeline(
+    api_key=settings.OPENAI_API_KEY,
+    index_path=settings.FAISS_INDEX_PATH
+)
 
 # Create your views here.
-def main_view(request):
-    return render(request, "tgservice/index.html", context={})
+class MainView(TemplateView):
+    template_name = "tgservice/main.html"
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['message'] = "Добро пожаловать в TG-Service"
+        return context
+
+# Страница формы Проекта и вывода результата
 def search_view(request):
     form = ProjectForm()
-    return render(request, "tgservice/search.html", context={'form': form})
+    project = None
+    channels = []
 
-def projects_view(request):
-    return render(request, "tgservice/projects.html")
-    
-def database_view(request):
-    return render(request, "tgservice/database.html")
+    project_id = request.GET.get("project_id")
+    if project_id:
+        project = get_object_or_404(Project, pk=project_id)
+        form = ProjectForm(instance=project)
+        channels = RelevantChannel.objects.filter(project=project)
 
+    if request.method == "POST":
+        form = ProjectForm(request.POST)
+        if form.is_valid():
+            project = form.save()
+
+            description_project = (
+                f"Описание рекламного проекта: {project.description}\n"
+                f"Описание целевой аудитории: {project.target_audience}"
+            )
+
+            # Получаем профиль проекта (асинхронные вызовы через обёртку)
+            profile = async_to_sync(pipeline.get_profile_creative)(description_project)
+            project.project_profile = profile
+            project.save()
+
+            # Получаем релевантные каналы
+            relevant_objects = async_to_sync(pipeline.get_relevant_channels)(
+                profile_project=profile,
+                keywords_project=project.keywords,
+                project=project,
+                top_k=project.count_requested
+            )
+
+            # Генерируем креативы
+            update_relevant_objects, _ = async_to_sync(pipeline.process_generate_creatives)(relevant_objects, project)
+
+            channels = update_relevant_objects
+
+            # После POST — редирект на GET, чтобы избежать повторной отправки
+            return redirect(f"{request.path}?project_id={project.id}")
+
+    return render(request, "tgservice/search.html", {
+        "form": form,
+        "project": project,
+        "channels": channels,
+    })
+
+# Страница Проектов
+class ProjectsView(ListView):
+    model = Project
+    template_name = "tgservice/projects.html"
+    context_object_name = "projects"
+    ordering = ["-created_at"]
+
+# Страница Всех каналов в БД    
+class ChannelsView(ListView):
+    model = WorkSheet
+    template_name = "tgservice/channels.html"
+    context_object_name = "channels"
+    paginate_by = 100
+    ordering = ["-subscribers"]  # или last_post_date
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+
+        # фильтр по категории
+        categories = self.request.GET.getlist("category")
+        if categories:
+            queryset = queryset.filter(category__in=categories)
+
+        # фильтр по минимальному количеству подписчиков
+        min_subs = self.request.GET.get("min_subs")
+        if min_subs:
+            queryset = queryset.filter(subscribers__gte=int(min_subs))
+
+        # фильтр по максимальному количеству подписчиков
+        max_subs = self.request.GET.get("max_subs")
+        if max_subs:
+            queryset = queryset.filter(subscribers__lte=int(max_subs))
+
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = "Каналы из базы данных"
+        context['all_categories'] = Category.objects.all()
+        context['selected_categories'] = self.request.GET.getlist("category")
+        context['min_subs'] = self.request.GET.get("min_subs", "")
+        context['max_subs'] = self.request.GET.get("max_subs", "")
+        return context
+
+# Пустой шаблон
 def empty_view(request):
     return render(request, "tgservice/empty.html")
 

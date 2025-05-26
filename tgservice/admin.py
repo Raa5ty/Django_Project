@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.db.models import Count
-from tgservice.models import Category, Channel, Message, WorkSheet
+from tgservice.models import Category, Channel, Message, WorkSheet, Project
 from rangefilter.filters import NumericRangeFilter
 
 # Register your models here.
@@ -57,3 +57,8 @@ class WorkSheetAdmin(admin.ModelAdmin):
         ("total_posts", NumericRangeFilter),
     ]
     search_fields = ["channel_name"]
+
+@admin.register(Project)
+class ProjectAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'created_at')
+    search_fields = ('name', 'description', 'keywords')

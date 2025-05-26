@@ -14,7 +14,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         self.create_indexdb()
 
-    def create_indexdb(self, embedding_model="text-embedding-ada-002"):
+    def create_indexdb(self, embedding_model="text-embedding-ada-002", batch_size=200):
         """Создаёт индексную базу FAISS и сохраняет её."""
         indexdb_filename = f"Index_DB_{time.strftime('%d-%m-%Y')}"
         index_path = os.path.join(settings.BASE_DIR, 'tgservice', indexdb_filename)
@@ -30,8 +30,22 @@ class Command(BaseCommand):
             metadata = {"channel_name": channel_name}
             documents.append(Document(page_content=page_content, metadata=metadata))
 
-        embeddings = OpenAIEmbeddings(model=embedding_model)
-        vectorstore = FAISS.from_documents(documents, embeddings)
+        if not documents:
+            self.stdout.write(self.style.WARNING("Нет документов для индексации."))
+            return
 
-        vectorstore.save_local(index_path)
-        self.stdout.write(self.style.SUCCESS(f"Индекс сохранён в : tgservice/{indexdb_filename}"))
+        embeddings = OpenAIEmbeddings(model=embedding_model)
+
+        all_indexes = []
+
+        for i in range(0, len(documents), batch_size):
+                batch = documents[i:i + batch_size]
+                index = FAISS.from_documents(batch, embeddings)
+                all_indexes.append(index)
+
+        combined_index = all_indexes[0]
+        for idx in all_indexes[1:]:
+            combined_index.merge_from(idx)
+
+        combined_index.save_local(index_path)
+        self.stdout.write(self.style.SUCCESS(f"Индекс сохранён в: tgservice/{indexdb_filename}"))
