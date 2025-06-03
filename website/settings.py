@@ -54,13 +54,14 @@ ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
     'tgservice', # App AI-assistant for Telegram
-    "rangefilter", # Filtering in admin panel
+    'rangefilter', # Filtering in admin panel
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+     
 ]
 
 MIDDLEWARE = [
@@ -122,6 +123,11 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+
+# Настройки аутентификации
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/search/'
+LOGOUT_REDIRECT_URL = '/login/'
 
 
 # Internationalization

@@ -179,7 +179,75 @@ body {
     text-align: center;
 }
 
-/* Формы */
+/* Форма Логина */
+.login-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    margin-top: 30px; /* или сколько тебе надо */
+    height: auto; /* ключевое */
+    /* background-color: var(--sidebar-light); */
+}
+
+.login-form {
+    max-width: 360px;
+    width: 100%;
+    background: #2c2c2c; /* чуть светлее фон формы */
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    color: #f1f1f1; /* текст светлый */
+}
+
+.login-form h2 {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    color: #fff;
+}
+
+.login-form .form-group {
+    margin-bottom: 1.2rem;
+}
+
+.login-form label {
+    display: block;
+    margin-bottom: 0.3rem;
+    color: var(--accent);
+}
+
+.login-form input {
+    width: 100%;
+    padding: 0.5rem;
+    background-color: #3a3a3a;
+    border: 1px solid #555;
+    border-radius: 6px;
+    font-size: 1rem;
+    color: #f1f1f1;
+}
+
+.login-form input:focus {
+    border-color: #4f46e5;
+    outline: none;
+    background-color: #444;
+}
+
+.login-form .btn {
+    width: 100%;
+    padding: 0.6rem;
+    background-color: #4f46e5;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.login-form .btn:hover {
+    background-color: #3730a3;
+}
+
+/* Форма Проекта */
 .form-columns {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
