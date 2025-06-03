@@ -53,14 +53,27 @@
     <!-- Таблица результатов -->
     {% if project %}
     <div class="projects-description">
+        <br>
         <h2>Проект: {{ project.name }}</h2>
+        <br>
         <p><strong>Описание:</strong> {{ project.description }}</p>
-        <p><strong>ЦА:</strong> {{ project.target_audience }}</p>
+        <br>
+        <p><strong>Целевая аудитория:</strong> {{ project.target_audience }}</p>
+        <br>
         <p><strong>Ключевые слова:</strong> {{ project.keywords }}</p>
+        <br>
     </div>
 
-    <div class="projects-description">
-        <h3>Найденные каналы</h3>
+    <!-- Шапка таблицы и кнопка выгрузки файла -->
+    <div class="projects-description" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <h3 style="margin: 0;">Найденные каналы</h3>
+        <a href="{% url 'tgservice:download_excel' project.id %}" class="btn btn-success">
+            📥 Скачать Excel
+        </a>
+    </div>
+
+    <!-- Блок таблицы -->
+    <div class="projects-description">    
         <table class="form-control">
             <thead>
                 <tr>
@@ -68,7 +81,7 @@
                     <th>Категория</th>
                     <th>Подписчики</th>
                     <th>Описание</th>
-                    <th>Ключевые слова</th>
+                    <th>Креативы</th>
                     <th>Оценка</th>
                 </tr>
             </thead>
@@ -79,7 +92,7 @@
                     <td>{{ channel.category }}</td>
                     <td>{{ channel.subscribers }}</td>
                     <td>{{ channel.description|truncatewords:20 }}</td>
-                    <td>{{ channel.keywords_channel }}</td>
+                    <td>{{ channel.new_creatives }}</td>
                     <td>{{ channel.score }}</td>
                 </tr>
                 {% endfor %}

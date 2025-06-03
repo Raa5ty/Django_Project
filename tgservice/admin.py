@@ -3,7 +3,7 @@ from django.db.models import Count
 from tgservice.models import Category, Channel, Message, WorkSheet, Project
 from rangefilter.filters import NumericRangeFilter
 
-# Register your models here.
+
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
     search_fields = ["name"]

@@ -1,10 +1,15 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import TemplateView, ListView
-from .forms import ProjectForm
-from .models import Project, RelevantChannel, WorkSheet, Category
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse, Http404
+from tgservice.forms import ProjectForm
+from tgservice.models import Project, RelevantChannel, WorkSheet, Category
 from tgservice.tgbot.utils import TargetPipeline
+from tgservice.utils import generate_excel_for_project 
 from asgiref.sync import async_to_sync
 from django.conf import settings
+from datetime import datetime
 
 # Создаём один экземпляр для всего модуля
 pipeline = TargetPipeline(
@@ -13,7 +18,8 @@ pipeline = TargetPipeline(
 )
 
 # Create your views here.
-class MainView(TemplateView):
+
+class MainView(LoginRequiredMixin, TemplateView):
     template_name = "tgservice/main.html"
 
     def get_context_data(self, **kwargs):
@@ -21,7 +27,24 @@ class MainView(TemplateView):
         context['message'] = "Добро пожаловать в TG-Service"
         return context
 
-# Страница формы Проекта и вывода результата
+# Сохранение результатов подбора в excel
+@login_required(login_url='/')
+def download_excel(request, project_id):
+    project = get_object_or_404(Project, pk=project_id)
+    excel_file = generate_excel_for_project(project)
+
+    if not excel_file:
+        return Http404("Нет данных для выгрузки.", status=404)
+
+    response = HttpResponse(
+        excel_file.getvalue(),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = f'attachment; filename=project_{project_id}_results.xlsx'
+    return response
+
+# Страница формы Проекта и вывода результата с защитой
+@login_required(login_url='/')
 def search_view(request):
     form = ProjectForm()
     project = None
@@ -32,7 +55,7 @@ def search_view(request):
         project = get_object_or_404(Project, pk=project_id)
         form = ProjectForm(instance=project)
         channels = RelevantChannel.objects.filter(project=project)
-
+        
     if request.method == "POST":
         form = ProjectForm(request.POST)
         if form.is_valid():
@@ -71,14 +94,14 @@ def search_view(request):
     })
 
 # Страница Проектов
-class ProjectsView(ListView):
+class ProjectsView(LoginRequiredMixin, ListView):
     model = Project
     template_name = "tgservice/projects.html"
     context_object_name = "projects"
     ordering = ["-created_at"]
 
 # Страница Всех каналов в БД    
-class ChannelsView(ListView):
+class ChannelsView(LoginRequiredMixin, ListView):
     model = WorkSheet
     template_name = "tgservice/channels.html"
     context_object_name = "channels"
@@ -114,7 +137,8 @@ class ChannelsView(ListView):
         context['max_subs'] = self.request.GET.get("max_subs", "")
         return context
 
-# Пустой шаблон
+# Пустой шаблон с защитой
+@login_required(login_url='/')
 def empty_view(request):
     return render(request, "tgservice/empty.html")
 

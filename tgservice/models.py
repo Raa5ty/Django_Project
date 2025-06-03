@@ -1,6 +1,7 @@
 from django.db import models
+from django.contrib.auth.models import User
 
-# Create your models here.
+
 class Category(models.Model):
     name = models.CharField(max_length=255, unique=True)    
     url = models.URLField(unique=True)
@@ -55,6 +56,7 @@ class WorkSheet(models.Model):
         return self.channel_name
     
 class Project(models.Model):
+    # user = models.ForeignKey(TelegramAccount, on_delete=models.CASCADE, related_name='tg_user', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     name = models.CharField(max_length=255)  # Название Рекламной кампании
     description = models.TextField(null=True) # Описание Рекламной кампании

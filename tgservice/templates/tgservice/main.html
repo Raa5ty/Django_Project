@@ -7,18 +7,20 @@
 {% block content %}
 <!-- Главная страница -->
 <div class="page" id="main-page">
-    <p>{{ message }}</p>
-    
-    <div class="main-description">
-        <h1>Поиск релевантных каналов под вашу рекламную кампанию с TG-Service</h1>
-        <br>
-        <br>
-        <br>
-        <p>Приложение нацелено на то, чтобы сделать поиск релевантных каналов для проведения рекламных компаний проще и быстрее!</p>
-    </div>
-    
-    <button class="btn btn-block" id="start-test-button" data-url="{% url 'tgservice:search' %}">
-        <h2>Создать новый проект</h2>
-    </button>
+
+        <div class="main-description">
+            
+            <h2>{{ message }}</h2>
+            <br>
+            <h3>Платформа по подбору релевантных каналов под вашу рекламную кампанию!</h3>
+            <br>
+            <br>
+            <p>Мы стремимся сделать организацию Ваших проектов проще, быстрее и эффективнее!</p>
+            
+        </div>
+        
+        <button class="btn btn-block" id="start-test-button" data-url="{% url 'tgservice:login' %}">
+            <h2>Войти</h2>
+        </button>
 </div>
 {% endblock %}           
