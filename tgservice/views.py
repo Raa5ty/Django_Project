@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import TemplateView, ListView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse, Http404
+from django.http import HttpResponse, HttpResponseNotFound
 from tgservice.forms import ProjectForm
 from tgservice.models import Project, RelevantChannel, WorkSheet, Category
 from tgservice.tgbot.utils import TargetPipeline
@@ -28,13 +28,13 @@ class MainView(LoginRequiredMixin, TemplateView):
         return context
 
 # Сохранение результатов подбора в excel
-@login_required(login_url='/')
+@login_required()
 def download_excel(request, project_id):
     project = get_object_or_404(Project, pk=project_id)
     excel_file = generate_excel_for_project(project)
 
     if not excel_file:
-        return Http404("Нет данных для выгрузки.", status=404)
+        return HttpResponseNotFound("Нет данных для выгрузки.")
 
     response = HttpResponse(
         excel_file.getvalue(),
@@ -44,7 +44,7 @@ def download_excel(request, project_id):
     return response
 
 # Страница формы Проекта и вывода результата с защитой
-@login_required(login_url='/')
+@login_required()
 def search_view(request):
     form = ProjectForm()
     project = None
@@ -86,6 +86,8 @@ def search_view(request):
 
             # После POST — редирект на GET, чтобы избежать повторной отправки
             return redirect(f"{request.path}?project_id={project.id}")
+        else:
+            print(form.errors)
 
     return render(request, "tgservice/search.html", {
         "form": form,
@@ -138,7 +140,7 @@ class ChannelsView(LoginRequiredMixin, ListView):
         return context
 
 # Пустой шаблон с защитой
-@login_required(login_url='/')
+@login_required()
 def empty_view(request):
     return render(request, "tgservice/empty.html")
 

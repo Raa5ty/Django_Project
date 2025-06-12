@@ -55,9 +55,7 @@ class WorkSheet(models.Model):
     def __str__(self):
         return self.channel_name
     
-class Project(models.Model):
-    # user = models.ForeignKey(TelegramAccount, on_delete=models.CASCADE, related_name='tg_user', null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+class Project(models.Model): 
     name = models.CharField(max_length=255)  # Название Рекламной кампании
     description = models.TextField(null=True) # Описание Рекламной кампании
     target_audience = models.TextField(null=True) # Описание ЦА
@@ -65,6 +63,7 @@ class Project(models.Model):
     creatives = models.TextField(null=True)  # Примеры креативов
     count_requested = models.PositiveIntegerField(null=True)   # Сколько каналов запрашивали
     project_profile = models.TextField(null=True)  # Сгенерированный профиль
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.name} (создан: {self.created_at.strftime('%Y-%m-%d %H:%M')})"
