@@ -26,6 +26,9 @@ class ProjectForm(forms.ModelForm):
             'keywords': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
             'creatives': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
         }
+    def __init__(self, *args, **kwargs):
+        super(ProjectForm, self).__init__(*args, **kwargs)
+        self.fields['creatives'].required = False
 
 # Форма для поиска релевантныхх каналов под рекламную кампанию
 # class ProjectForm(forms.Form):

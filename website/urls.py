@@ -22,6 +22,6 @@ from tgservice.forms import CustomLoginForm
 urlpatterns = [
     path('admin/', admin.site.urls),
 
-    # Включаем tgservice маршруты
+    # Включаем маршруты tgservice 
     path('', include('tgservice.urls', namespace='tgservice')),
 ]
