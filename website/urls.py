@@ -16,12 +16,17 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.conf import settings
 from django.contrib.auth import views as auth_views
 from tgservice.forms import CustomLoginForm
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-
-    # Включаем маршруты tgservice 
-    path('', include('tgservice.urls', namespace='tgservice')),
+    path('', include('tgservice.urls', namespace='tgservice')), # Включаем маршруты приложения TG-Service 
 ]
+
+if settings.DEBUG:
+    import debug_toolbar
+    urlpatterns = [
+        path('__debug__/', include(debug_toolbar.urls)),
+    ] + urlpatterns

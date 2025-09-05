@@ -35,8 +35,8 @@ class Message(models.Model):
 
 class WorkSheet(models.Model):
     channel_name = models.CharField(max_length=255, unique=True)
-    category = models.CharField(max_length=255)
-    subscribers = models.IntegerField(null=True)
+    category = models.CharField(max_length=255, db_index=True)
+    subscribers = models.IntegerField(null=True, db_index=True)
     title = models.TextField(null=True)
     description = models.TextField(null=True)
     text_messages = models.TextField(null=True)
@@ -63,7 +63,7 @@ class Project(models.Model):
     creatives = models.TextField(null=True)  # Примеры креативов
     count_requested = models.PositiveIntegerField(null=True)   # Сколько каналов запрашивали
     project_profile = models.TextField(null=True)  # Сгенерированный профиль
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
 
     def __str__(self):
         return f"{self.name} (создан: {self.created_at.strftime('%Y-%m-%d %H:%M')})"

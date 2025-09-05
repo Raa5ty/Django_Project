@@ -22,11 +22,14 @@ function fetchPageContent(url) {
             // Вытаскиваем только содержимое <body> (без <head>, <html>)
             const parser = new DOMParser();
             const doc = parser.parseFromString(html, "text/html");
-            const newContent = doc.querySelector('.main-content').innerHTML;
+            
             // Обновляем контент в текущей странице
+            const newContent = doc.querySelector('.main-content').innerHTML;
             document.querySelector('.main-content').innerHTML = newContent;
+
             // Обновляем URL в адресной строке без перезагрузки страницы
             history.pushState(null, '', url);
+
             // Обновляем активную ссылку в боковом меню
             updateActiveLink();
         })
