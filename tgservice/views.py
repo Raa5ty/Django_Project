@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import TemplateView, ListView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
+from django.utils.functional import cached_property
 from django.http import HttpResponse, HttpResponseNotFound
 from tgservice.forms import ProjectForm
 from tgservice.models import Project, RelevantChannel, WorkSheet, Category
@@ -54,7 +55,10 @@ def search_view(request):
     if project_id:
         project = get_object_or_404(Project, pk=project_id)
         form = ProjectForm(instance=project)
-        channels = RelevantChannel.objects.filter(project=project)
+        # Оптимизация: грузим только нужные поля RelevantChannel
+        channels = RelevantChannel.objects.filter(project=project).only(
+            "channel_name", "category", "subscribers", "description", "new_creatives", "score"
+        )
         
     if request.method == "POST":
         form = ProjectForm(request.POST)
@@ -129,6 +133,10 @@ class ChannelsView(LoginRequiredMixin, ListView):
             queryset = queryset.filter(subscribers__lte=int(max_subs))
 
         return queryset
+    
+    @cached_property
+    def all_categories(self):
+        return list(Category.objects.all())
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
